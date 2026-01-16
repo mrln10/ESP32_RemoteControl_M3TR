@@ -1,0 +1,7 @@
+{
+  "name": "RotaryEncoder",
+  "version": "1.0.0",
+  "description": "decode rotary encoder",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

@@ -1,0 +1,122 @@
+#include <Arduino.h>
+#include <TFTDisplay.h>
+#include <RotaryEncoder.h>
+
+// hiermit erscheint eine vierstellige zahl auf dem bildschirm, encoder kann zahlen wehcseln langer drücker lässt gespeichert erscheinen kurzer drücker verschiueb cursor
+
+// ---- Editor State ----
+static uint8_t digits[4] = {0, 0, 0, 0};
+static uint8_t selected = 0;
+
+static uint32_t savedUntilMs = 0;
+
+// Rendering-Parameter
+static const uint8_t DIGIT_SIZE = 5;   // Textgröße (try 4..6)
+static const uint8_t GAP = 2;          // Abstand zwischen Ziffern in "Pixeln" (wird noch skaliert)
+
+// Hilfsfunktion: sichere Modulo-Operation für negative Werte
+static int mod(int a, int m) {
+  int r = a % m;
+  return (r < 0) ? (r + m) : r;
+}
+
+// Zeichnet die 4 Ziffern zentriert + Unterstrich unter der selektierten Stelle
+static void renderEditor() {
+  clearDisplay();
+  if (millis() < savedUntilMs) {
+    // kleine Statuszeile oben
+    drawText("Gespeichert", 6, 6, 2, 0, 255, 0);
+  }
+  int16_t W, H;
+  getDisplaySize(W, H);
+
+  // Adafruit Default-Font: Zeichenbreite 6px, Höhe 8px bei TextSize=1
+  const int16_t charW = 6 * DIGIT_SIZE;
+  const int16_t charH = 8 * DIGIT_SIZE;
+
+  // Gap ebenfalls skalieren, damit es optisch passt
+  const int16_t gapPx = GAP * DIGIT_SIZE;
+
+  // Gesamtbreite der 4 Ziffern inkl. Lücken
+  const int16_t totalW = 4 * charW + 3 * gapPx;
+
+  // Startposition so, dass es horizontal mittig ist
+  const int16_t startX = (W - totalW) / 2;
+  const int16_t startY = (H - charH) / 2;
+
+  // Ziffern zeichnen
+  for (int i = 0; i < 4; i++) {
+    char buf[2];
+    buf[0] = char('0' + digits[i]);
+    buf[1] = '\0';
+
+    int16_t x = startX + i * (charW + gapPx);
+    int16_t y = startY;
+
+    // Weißer Text
+    drawText(buf, x, y, DIGIT_SIZE, 255, 255, 255);
+  }
+
+  // Unterstrich unter ausgewählter Ziffer
+  {
+    int16_t underlineX0 = startX + selected * (charW + gapPx);
+    int16_t underlineX1 = underlineX0 + charW - 1;
+
+    // Linie etwas unterhalb der Ziffern
+    int16_t underlineY = startY + charH + (DIGIT_SIZE); // Abstand skaliert
+
+    // Gelber Unterstrich (gut sichtbar)
+    drawLineRGB(underlineX0, underlineY, underlineX1, underlineY, 255, 255, 0);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  initDisplay();
+  runBit();
+
+  initRotaryEncoder();
+
+  renderEditor();
+}
+
+void loop() {
+  updateRotaryEncoder();
+
+  bool changed = false;
+
+  // Drehung
+  int32_t d = getEncoderDelta();
+  if (d != 0) {
+    // d kann >1 sein (bei schneller Drehung), daher sauber auf 0..9 wrappen
+    int newVal = (int)digits[selected] + (int)d;
+    digits[selected] = (uint8_t)mod(newVal, 10);
+    changed = true;
+  }
+
+  if (getButtonLongPressed()) {
+    savedUntilMs = millis() + 1200;
+    // optional: hier wirklich speichern/committen
+    renderEditor();
+  }
+  
+  if (getButtonPressed()) {
+    selected = (selected + 1) % 4;
+    renderEditor();
+  }
+
+
+  // Nur neu zeichnen, wenn sich etwas geändert hat
+  if (changed) {
+    renderEditor();
+
+    // Optional Debug
+    Serial.print("Digits: ");
+    Serial.print(digits[0]); Serial.print(digits[1]);
+    Serial.print(digits[2]); Serial.print(digits[3]);
+    Serial.print("  selected=");
+    Serial.println(selected);
+  }
+}

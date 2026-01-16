@@ -1,0 +1,7 @@
+{
+  "name": "TFTDisplay",
+  "version": "1.0.0",
+  "description": "TFT display abstraction",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

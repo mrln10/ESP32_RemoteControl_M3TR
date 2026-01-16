@@ -1,0 +1,7 @@
+{
+  "name": "GUI",
+  "version": "1.0.0",
+  "description": "implements user interface with very schoene oberflaeche",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "NavButtons",
+  "version": "1.0.0",
+  "description": "implements two navigation buttons",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

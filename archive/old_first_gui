@@ -1,0 +1,74 @@
+#include <Arduino.h>
+#include <TFTDisplay.h>
+#include <RotaryEncoder.h> // wird noch nicht genutzt, nur später
+
+void drawStaticUI() {
+  clearDisplay();
+
+  int16_t W, H;
+  getDisplaySize(W, H);
+
+  // --------------------
+  // HEADER (oben links)
+  // --------------------
+  drawText("Frequenz", 6, 6, 2, 0, 255, 255);   // Cyan als aktives Feld
+
+  // Trennlinie Header
+  drawLineRGB(0, 28, W, 28, 80, 80, 80);
+
+  // --------------------
+  // MAIN VALUE (zentriert)
+  // --------------------
+  const char* value = "104.200";
+  const char* unit  = "kHz";
+
+  uint8_t valueSize = 3;
+  uint8_t unitSize  = 1;
+
+  // Grobe Textmaße (Default Font: 6x8)
+  int valueWidth = strlen(value) * 6 * valueSize;
+  int unitWidth  = strlen(unit)  * 6 * unitSize;
+
+  int totalWidth = valueWidth + 8 + unitWidth;
+
+  int startX = (W - totalWidth) / 2;
+  int centerY = (H / 2) - 10;
+
+  // Zahl
+  drawText(value, startX, centerY, valueSize, 255, 255, 255);
+
+  // Einheit
+  drawText(
+    unit,
+    startX + valueWidth + 8,
+    centerY + (valueSize * 8) - (unitSize * 8),
+    unitSize,
+    180, 180, 180
+  );
+
+  // --------------------
+  // FOOTER / NAVIGATION
+  // --------------------
+  int footerY = H - 22;
+
+  // Trennlinie Footer
+  drawLineRGB(0, footerY - 4, W, footerY - 4, 80, 80, 80);
+
+  // Menüeinträge
+  drawText("FRQ",  10, footerY, 1, 0, 255, 255);   // aktiv
+  drawText("MOD",  50, footerY, 1, 160, 160, 160);
+  drawText("PWR",  90, footerY, 1, 160, 160, 160);
+
+  // Power-Symbol rechts (erstmal Text)
+  drawText("ON", W - 28, footerY, 1, 0, 255, 0);
+}
+
+void setup() {
+  initDisplay();
+
+
+  drawStaticUI();
+}
+
+void loop() {
+}
