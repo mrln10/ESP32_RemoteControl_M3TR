@@ -1,0 +1,100 @@
+#include <ETH.h>
+#include <WiFiClient.h>
+
+IPAddress localIP(192, 168, 52, 10);
+IPAddress gateway(192, 168, 52, 1);
+IPAddress subnet(255, 255, 255, 0);
+
+const char* M3TR_IP = "192.168.52.34";
+const uint16_t M3TR_PORT = 4655;
+
+WiFiClient client;
+bool ethReady = false;
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  Serial.println();
+  Serial.println("ESP32-ETH01 TCP-Bridge startet...");
+
+  // Ethernet starten
+  if (!ETH.begin()) {
+    Serial.println("ETH.begin() fehlgeschlagen!");
+  } else {
+    Serial.println("ETH.begin() ok");
+  }
+
+  // Statische IP setzen
+  ETH.config(localIP, gateway, subnet);
+
+  // Kurz warten, bis Link/IP steht
+  Serial.print("Warte auf Ethernet-Link/IP");
+  uint32_t t0 = millis();
+  while (millis() - t0 < 8000) {
+    if (ETH.linkUp() && ETH.localIP()[0] != 0) {
+      ethReady = true;
+      break;
+    }
+    Serial.print(".");
+    delay(250);
+  }
+  Serial.println();
+
+  if (ethReady) {
+    Serial.print("ETH Link UP, IP: ");
+    Serial.println(ETH.localIP());
+  } else {
+    Serial.println("Ethernet nicht bereit (Link/IP). Prüfe Kabel/PHY/Board-Konfig.");
+  }
+
+  Serial.println("Im Seriellen Monitor eine Zeile tippen und Enter -> wird als \\n<cmd>\\r an M3TR gesendet.");
+}
+
+static void ensureConnected() {
+  if (!ethReady) return;
+
+  if (client.connected()) return;
+
+  Serial.println("Verbinde zu M3TR...");
+  client.stop();
+
+  // Optional: kleiner Delay nach LinkUp manchmal hilfreich
+  delay(50);
+
+  if (client.connect(M3TR_IP, M3TR_PORT)) {
+    Serial.println("TCP verbunden.");
+  } else {
+    Serial.println("TCP connect fehlgeschlagen.");
+  }
+}
+
+void loop() {
+  // Optional: Antwort vom M3TR ausgeben
+  while (client.connected() && client.available()) {
+    int c = client.read();
+    if (c >= 0) Serial.write((char)c);
+  }
+
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd.length() == 0) return;
+
+    if (!ethReady) {
+      Serial.println("ETH nicht bereit -> kann nicht senden.");
+      return;
+    }
+
+    ensureConnected();
+    if (!client.connected()) return;
+
+    // <LF>BEFEHL<CR>
+    client.write('\n');      // LF
+    client.print(cmd);       // BEFEHL
+    client.write('\r');      // CR
+
+    Serial.print("Gesendet: ");
+    Serial.println(cmd);
+  }
+}

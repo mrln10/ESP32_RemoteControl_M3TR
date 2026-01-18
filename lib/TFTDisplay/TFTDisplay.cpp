@@ -44,9 +44,9 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
  *   ist Rotation + initR(Tab) das erste, was man prueft.
  */
 bool initDisplay() {
-  // Backlight einschalten
-  pinMode(TFT_BL, OUTPUT);
-  digitalWrite(TFT_BL, HIGH);
+  // Backlight einschalten nur bei der esp32 var notwendig da bei eth01 hardgecoded ist
+  //pinMode(TFT_BL, OUTPUT);
+  //digitalWrite(TFT_BL, HIGH);
 
   // SPI starten (kein MISO => -1)
   SPI.begin(TFT_SCK, -1, TFT_MOSI);

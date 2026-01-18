@@ -14,17 +14,13 @@
 // Modulationsarten (Liste)
 // ---------------------------
 // Hinweis: Reihenfolge entspricht der Auswahlreihenfolge im UI.
-const char* const GUI_MOD_LIST[] = {
-  "AM", "FM", "USB", "LSB", "CW", "DIGI"
-};
+const char* const GUI_MOD_LIST[] = { "A3E" };
 const int GUI_MOD_COUNT = sizeof(GUI_MOD_LIST) / sizeof(GUI_MOD_LIST[0]);
 
 // ---------------------------
 // Power-Modi (Liste)
 // ---------------------------
-const char* const GUI_PWR_LIST[] = {
-  "LOW", "MED", "HIGH"
-};
+const char* const GUI_PWR_LIST[] = { "LOW", "MED", "HIGH" };
 const int GUI_PWR_COUNT = sizeof(GUI_PWR_LIST) / sizeof(GUI_PWR_LIST[0]);
 
 // ---------------------------

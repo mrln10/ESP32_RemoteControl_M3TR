@@ -1,10 +1,3 @@
-// src/main.cpp
-//
-// Entry point des Projekts.
-// - Initialisiert Hardware-Module (Display, Encoder, Nav-Buttons)
-// - Startet danach die GUI-State-Machine
-// - Loop ruft nur guiUpdate() auf (GUI kümmert sich um Input + Rendering)
-
 #include <Arduino.h>
 
 #include <TFTDisplay.h>
@@ -12,26 +5,55 @@
 #include <NavButtons.h>
 #include <GUI.h>
 
+#include <RadioTCP.h>
+
 void setup() {
-  // Optional: Debug-Ausgaben
   Serial.begin(115200);
   delay(200);
 
-  // Display initialisieren (Rotation/Grundsetup erfolgt im TFTDisplay-Modul)
   initDisplay();
+  runBit();
 
-  // Optionaler Power-On-Selbsttest (IBIT/Screen-Test) – kann später entfernt/angepasst werden
-  //runBit();
-
-  // Input-Module initialisieren
   initRotaryEncoder();
   initNavButtons();
 
-  // GUI initialisieren (zieht Theme/Limits/Listen/Defaults aus include/gui_config.h)
+  // Netzwerk
+  radioInit();
+
+  // UI
   guiInit();
+  guiSetRadioOn(radioIsRadioOn());
 }
 
 void loop() {
-  // GUI verarbeitet Eingaben + aktualisiert Anzeige nur bei Bedarf
   guiUpdate();
+  radioUpdate();
+
+  // 1) ON Toggle aus GUI (Footer-Fokus ON + Encoder Short)
+  if (guiConsumeOnToggleRequested()) {
+    if (!radioIsRadioOn()) {
+      bool ok = radioConnect();
+      guiSetRadioOn(ok && radioIsRadioOn());
+    } else {
+      radioDisconnect();
+      guiSetRadioOn(false);
+    }
+  }
+
+  // 2) Save (Encoder Long im Edit) -> ans Radio senden, wenn Radio ON
+  GuiScreen saved;
+  if (guiConsumeSaveRequested(saved)) {
+    if (!radioIsRadioOn()) {
+      // Nur lokal gespeichert (Toast), nichts senden
+      return;
+    }
+
+    if (saved == GUI_FRQ) {
+      radioSetFrequencyHz(guiGetFrequencyHz());
+    } else if (saved == GUI_MOD) {
+      radioSetModulationIndex(guiGetModIndex());
+    } else {
+      // PWR: wie gewünscht noch überspringen
+    }
+  }
 }

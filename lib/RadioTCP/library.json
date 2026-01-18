@@ -1,0 +1,7 @@
+{
+  "name": "RotaryEncoder",
+  "version": "1.0.0",
+  "description": "connect to radio via ip and port",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}
